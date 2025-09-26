@@ -1,6 +1,7 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { useState } from 'react';
 import { Button, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -76,49 +77,54 @@ export default function FileUploadScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContent}>
-      <ThemedView style={styles.card}>
-        <ThemedText type="title" style={styles.title}>
-          Upload a file
-        </ThemedText>
-        <ThemedText style={styles.paragraph}>
-          Use Expo&apos;s document picker to upload any file to{' '}
-          <ThemedText type="defaultSemiBold">{DEMO_UPLOAD_URL}</ThemedText>. Swap the endpoint to
-          integrate your backend.
-        </ThemedText>
+    <SafeAreaView
+      edges={['top', 'bottom', 'left', 'right']}
+      style={[styles.safeArea, { backgroundColor: palette.background }]}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContent} style={styles.scrollView}>
+        <ThemedView style={styles.card}>
+          <ThemedText type="title" style={styles.title}>
+            Upload a file
+          </ThemedText>
+          <ThemedText style={styles.paragraph}>
+            Use Expo&apos;s document picker to upload any file to{' '}
+            <ThemedText type="defaultSemiBold">{DEMO_UPLOAD_URL}</ThemedText>. Swap the endpoint to
+            integrate your backend.
+          </ThemedText>
 
-        <View style={styles.buttonStack}>
-          <View style={styles.buttonWrapper}>
-            <Button title="Choose file" onPress={pickFile} />
+          <View style={styles.buttonStack}>
+            <View style={styles.buttonWrapper}>
+              <Button title="Choose file" onPress={pickFile} />
+            </View>
+            <View style={styles.buttonWrapper}>
+              <Button
+                title={status === 'uploading' ? 'Uploading…' : 'Upload file'}
+                onPress={uploadFile}
+                disabled={!asset || status === 'uploading'}
+              />
+            </View>
           </View>
-          <View style={styles.buttonWrapper}>
-            <Button
-              title={status === 'uploading' ? 'Uploading…' : 'Upload file'}
-              onPress={uploadFile}
-              disabled={!asset || status === 'uploading'}
-            />
-          </View>
-        </View>
 
-        {asset ? (
-          <ThemedView style={styles.fileSummary}>
-            <ThemedText type="defaultSemiBold">
-              {asset.name ?? inferFilename(asset.uri, asset.mimeType?.split('/')[1] ?? 'bin')}
-            </ThemedText>
-            <ThemedText style={styles.fileMeta}>
-              {asset.mimeType ?? 'application/octet-stream'}
-            </ThemedText>
-            {typeof asset.size === 'number' ? (
-              <ThemedText style={styles.fileMeta}>{formatBytes(asset.size)}</ThemedText>
-            ) : null}
-          </ThemedView>
-        ) : (
-          <ThemedText style={styles.placeholder}>No file selected yet.</ThemedText>
-        )}
+          {asset ? (
+            <ThemedView style={styles.fileSummary}>
+              <ThemedText type="defaultSemiBold">
+                {asset.name ?? inferFilename(asset.uri, asset.mimeType?.split('/')[1] ?? 'bin')}
+              </ThemedText>
+              <ThemedText style={styles.fileMeta}>
+                {asset.mimeType ?? 'application/octet-stream'}
+              </ThemedText>
+              {typeof asset.size === 'number' ? (
+                <ThemedText style={styles.fileMeta}>{formatBytes(asset.size)}</ThemedText>
+              ) : null}
+            </ThemedView>
+          ) : (
+            <ThemedText style={styles.placeholder}>No file selected yet.</ThemedText>
+          )}
 
-        <ThemedText style={[styles.statusText, { color: statusColor }]}>{message}</ThemedText>
-      </ThemedView>
-    </ScrollView>
+          <ThemedText style={[styles.statusText, { color: statusColor }]}>{message}</ThemedText>
+        </ThemedView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -150,6 +156,12 @@ function inferFilename(uri: string, fallbackExtension: string) {
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
   scrollContent: {
     flexGrow: 1,
     padding: 24,

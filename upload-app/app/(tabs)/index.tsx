@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { Alert, Button, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -96,44 +97,49 @@ export default function ImageUploadScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContent}>
-      <ThemedView style={styles.card}>
-        <ThemedText type="title" style={styles.title}>
-          Upload an image
-        </ThemedText>
-        <ThemedText style={styles.paragraph}>
-          This example packages the selected photo into a multi-part form request pointed at{' '}
-          <ThemedText type="defaultSemiBold">{DEMO_UPLOAD_URL}</ThemedText>. Replace the URL to wire
-          up your backend.
-        </ThemedText>
+    <SafeAreaView
+      edges={['top', 'bottom', 'left', 'right']}
+      style={[styles.safeArea, { backgroundColor: palette.background }]}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContent} style={styles.scrollView}>
+        <ThemedView style={styles.card}>
+          <ThemedText type="title" style={styles.title}>
+            Upload an image
+          </ThemedText>
+          <ThemedText style={styles.paragraph}>
+            This example packages the selected photo into a multi-part form request pointed at{' '}
+            <ThemedText type="defaultSemiBold">{DEMO_UPLOAD_URL}</ThemedText>. Replace the URL to wire
+            up your backend.
+          </ThemedText>
 
-        <View style={styles.buttonStack}>
-          <View style={styles.buttonWrapper}>
-            <Button title="Choose image" onPress={pickImage} />
+          <View style={styles.buttonStack}>
+            <View style={styles.buttonWrapper}>
+              <Button title="Choose image" onPress={pickImage} />
+            </View>
+            <View style={styles.buttonWrapper}>
+              <Button
+                title={status === 'uploading' ? 'Uploading…' : 'Upload image'}
+                onPress={uploadImage}
+                disabled={!asset || status === 'uploading'}
+              />
+            </View>
           </View>
-          <View style={styles.buttonWrapper}>
-            <Button
-              title={status === 'uploading' ? 'Uploading…' : 'Upload image'}
-              onPress={uploadImage}
-              disabled={!asset || status === 'uploading'}
-            />
-          </View>
-        </View>
 
-        {asset ? (
-          <View style={styles.previewSection}>
-            <Image source={{ uri: asset.uri }} style={styles.previewImage} contentFit="cover" />
-            <ThemedText style={styles.assetName}>
-              {asset.fileName ?? inferFilename(asset.uri, asset.mimeType?.split('/')[1] ?? 'jpg')}
-            </ThemedText>
-          </View>
-        ) : (
-          <ThemedText style={styles.placeholder}>No image selected yet.</ThemedText>
-        )}
+          {asset ? (
+            <View style={styles.previewSection}>
+              <Image source={{ uri: asset.uri }} style={styles.previewImage} contentFit="cover" />
+              <ThemedText style={styles.assetName}>
+                {asset.fileName ?? inferFilename(asset.uri, asset.mimeType?.split('/')[1] ?? 'jpg')}
+              </ThemedText>
+            </View>
+          ) : (
+            <ThemedText style={styles.placeholder}>No image selected yet.</ThemedText>
+          )}
 
-        <ThemedText style={[styles.statusText, { color: statusColor }]}>{message}</ThemedText>
-      </ThemedView>
-    </ScrollView>
+          <ThemedText style={[styles.statusText, { color: statusColor }]}>{message}</ThemedText>
+        </ThemedView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -148,6 +154,12 @@ function inferFilename(uri: string, fallbackExtension: string) {
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
   scrollContent: {
     flexGrow: 1,
     padding: 24,
