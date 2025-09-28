@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Bun Upload Receiver</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 2rem auto;
+      max-width: 520px;
+      line-height: 1.5;
+    }
+
+    form {
+      border: 1px solid #ccc;
+      padding: 1.5rem;
+      border-radius: 12px;
+    }
+
+    label {
+      font-weight: 600;
+    }
+
+    input[type="text"],
+    input[type="file"] {
+      display: block;
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
+      width: 100%;
+    }
+
+    button {
+      padding: 0.75rem 1.25rem;
+      font-size: 1rem;
+      background: #0a7ea4;
+      color: white;
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Upload Receiver</h1>
+  <p>POST a file to <code>/upload</code>. This form uses <code>multipart/form-data</code>.</p>
+  <form action="/upload" method="post" enctype="multipart/form-data">
+    <label for="file">Choose file</label>
+    <input id="file" name="file" type="file" required />
+    <label for="note">Optional note</label>
+    <input id="note" name="note" type="text" placeholder="Description" />
+    <button type="submit">Send file</button>
+  </form>
+</body>
+
+</html>

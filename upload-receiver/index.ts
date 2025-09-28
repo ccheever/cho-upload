@@ -1,61 +1,54 @@
-import { mkdirSync, existsSync } from 'fs';
-import { join } from 'path';
+import { mkdirSync, existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+import { parseArgs } from "node:util";
 
-const PORT = Number.parseInt(process.env.PORT ?? '3400', 10);
-const uploadDirectory = join(import.meta.dir, 'uploads');
+// Get options
+//     Resolve with precedence: CLI > env > defaults
+let { values } = parseArgs({
+  options: {
+    port: { type: "string", short: "p" },
+    "uploads-dir": { type: "string", short: "u" },
+  },
+});
 
-if (!existsSync(uploadDirectory)) {
-  mkdirSync(uploadDirectory, { recursive: true });
+let PORT = Number(values.port ?? process.env.PORT ?? 3400);
+let UPLOADS_DIR = path.resolve(
+  values["uploads-dir"] ??
+    process.env.UPLOADS_DIR ??
+    path.join(process.cwd(), "uploads")
+);
+
+// Make upload directory if it doesn't exist
+if (!existsSync(UPLOADS_DIR)) {
+  mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
 function sanitizeFileName(input: string | undefined | null) {
-  const fallback = 'upload.bin';
+  const fallback = "upload.bin";
   const trimmed = input?.trim() ?? fallback;
-  const safe = trimmed.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const safe = trimmed.replace(/[^a-zA-Z0-9._-]/g, "_");
   return safe.length > 0 ? safe : fallback;
 }
 
-function htmlPage() {
-  return `<!DOCTYPE html>
-  <html lang="en">
-    <head>
-      <meta charset="utf-8" />
-      <title>Bun Upload Receiver</title>
-      <style>
 
-        body { font-family: system-ui, sans-serif; margin: 2rem auto; max-width: 520px; line-height: 1.5; }
-        form { border: 1px solid #ccc; padding: 1.5rem; border-radius: 12px; }
-        label { font-weight: 600; }
-        input[type="text"], input[type="file"] { display: block; margin-top: 0.5rem; margin-bottom: 1rem; width: 100%; }
-        button { padding: 0.75rem 1.25rem; font-size: 1rem; background: #0a7ea4; color: white; border: 0; border-radius: 8px; cursor: pointer; }
-      </style>
-    </head>
-    <body>
-      <h1>Upload Receiver</h1>
-      <p>POST a file to <code>/upload</code>. This form uses <code>multipart/form-data</code>.</p>
-      <form action="/upload" method="post" enctype="multipart/form-data">
-        <label for="file">Choose file</label>
-        <input id="file" name="file" type="file" required />
-        <label for="note">Optional note</label>
-        <input id="note" name="note" type="text" placeholder="Description" />
-        <button type="submit">Send file</button>
-      </form>
-    </body>
-  </html>`;
-}
-
+// Run server
 const server = Bun.serve({
+  idleTimeout: 60, // Keep this long since it can take a while to upload an image on a bad connection like an airplane
   port: PORT,
   async fetch(request) {
+    console.log("(request).");
     const url = new URL(request.url);
 
-    if (request.method === 'GET' && url.pathname === '/') {
-      return new Response(htmlPage(), {
-        headers: { 'content-type': 'text/html; charset=utf-8' },
+    if (request.method === "GET" && url.pathname === "/") {
+      let uploadHtml = await Bun.file("./upload-test-webpage.html").text();
+
+      // return new Response(readFileSync("./upload-test-webpage.html", "utf8"), {
+      return new Response(uploadHtml, {
+        headers: { "content-type": "text/html; charset=utf-8" },
       });
     }
 
-    if (request.method === 'POST' && url.pathname === '/upload') {
+    if (request.method === "POST" && url.pathname === "/upload") {
       const formData = await request.formData();
       const storedFiles: Array<{
         field: string;
@@ -66,7 +59,7 @@ const server = Bun.serve({
       const textFields: Record<string, string[]> = {};
 
       for (const [field, value] of formData.entries()) {
-        if (typeof value === 'string') {
+        if (typeof value === "string") {
           if (!textFields[field]) {
             textFields[field] = [];
           }
@@ -75,9 +68,9 @@ const server = Bun.serve({
         }
 
         if (value instanceof File) {
-          const originalName = value.name || 'upload.bin';
+          const originalName = value.name || "upload.bin";
           const safeName = `${Date.now()}-${sanitizeFileName(originalName)}`;
-          const filePath = join(uploadDirectory, safeName);
+          const filePath = path.join(UPLOADS_DIR, safeName);
 
           await Bun.write(filePath, value);
 
@@ -92,18 +85,23 @@ const server = Bun.serve({
 
       const responseBody = {
         ok: true,
-        message: storedFiles.length > 0 ? 'Files saved successfully.' : 'No files detected in upload.',
+        message:
+          storedFiles.length > 0
+            ? "Files saved successfully."
+            : "No files detected in upload.",
         files: storedFiles,
         fields: textFields,
-        directory: uploadDirectory,
+        directory: UPLOADS_DIR,
       };
 
-      console.info('Upload received', responseBody);
+      console.info("Upload received", responseBody);
 
-      return Response.json(responseBody, { status: storedFiles.length > 0 ? 200 : 400 });
+      return Response.json(responseBody, {
+        status: storedFiles.length > 0 ? 200 : 400,
+      });
     }
 
-    return new Response('Not found', { status: 404 });
+    return new Response("Not found", { status: 404 });
   },
 });
 
