@@ -1,6 +1,6 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { useState } from 'react';
-import { Button, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -8,6 +8,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { DEMO_UPLOAD_URL, uploadAsset } from '@/utils/demo-upload';
+import { PrimaryButton } from '@/components/ui/primary-button';
 
 type UploadState = 'idle' | 'ready' | 'uploading' | 'success' | 'error';
 
@@ -59,6 +60,7 @@ export default function FileUploadScreen() {
           uri: asset.uri,
           name: asset.name ?? inferFilename(asset.uri, 'bin'),
           type: asset.mimeType ?? 'application/octet-stream',
+          file: (asset as any).file ?? null,
         },
         { fieldName: 'file' },
       );
@@ -94,10 +96,10 @@ export default function FileUploadScreen() {
 
           <View style={styles.buttonStack}>
             <View style={styles.buttonWrapper}>
-              <Button title="Choose file" onPress={pickFile} />
+              <PrimaryButton title="Choose file" onPress={pickFile} />
             </View>
             <View style={styles.buttonWrapper}>
-              <Button
+              <PrimaryButton
                 title={status === 'uploading' ? 'Uploading…' : 'Upload file'}
                 onPress={uploadFile}
                 disabled={!asset || status === 'uploading'}

@@ -1,13 +1,14 @@
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { Alert, Button, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { PrimaryButton } from '@/components/ui/primary-button';
 import { DEMO_UPLOAD_URL, uploadAsset } from '@/utils/demo-upload';
 
 type UploadState = 'idle' | 'ready' | 'uploading' | 'success' | 'error';
@@ -79,6 +80,7 @@ export default function ImageUploadScreen() {
           uri: asset.uri,
           name: asset.fileName ?? inferFilename(asset.uri, 'jpg'),
           type: asset.mimeType ?? 'image/jpeg',
+          file: (asset as any).file ?? null,
         },
         { fieldName: 'image' },
       );
@@ -114,10 +116,10 @@ export default function ImageUploadScreen() {
 
           <View style={styles.buttonStack}>
             <View style={styles.buttonWrapper}>
-              <Button title="Choose image" onPress={pickImage} />
+              <PrimaryButton title="Choose image" onPress={pickImage} />
             </View>
             <View style={styles.buttonWrapper}>
-              <Button
+              <PrimaryButton
                 title={status === 'uploading' ? 'Uploading…' : 'Upload image'}
                 onPress={uploadImage}
                 disabled={!asset || status === 'uploading'}

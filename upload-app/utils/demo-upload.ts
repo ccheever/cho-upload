@@ -4,6 +4,7 @@ export type UploadableAsset = {
   uri: string;
   name: string;
   type?: string | null;
+  file?: File | null;
 };
 
 type UploadOptions = {
@@ -25,11 +26,13 @@ export async function uploadAsset(asset: UploadableAsset, options: UploadOptions
     }
   }
 
-  formData.append(fieldName, {
-    uri: asset.uri,
-    name: asset.name,
-    type: asset.type ?? 'application/octet-stream',
-  } as any);
+  const filePart = await createFormDataValue(asset);
+
+  if (isWebFile(filePart)) {
+    formData.append(fieldName, filePart, asset.name);
+  } else {
+    formData.append(fieldName, filePart as any);
+  }
 
   const response = await fetch(DEMO_UPLOAD_URL, {
     method: 'POST',
@@ -53,4 +56,32 @@ async function readBodySafely(response: Response) {
     console.warn('Unable to read response body', error);
     return '';
   }
+}
+
+async function createFormDataValue(asset: UploadableAsset) {
+  if (isWeb()) {
+    if (asset.file && isWebFile(asset.file)) {
+      return asset.file;
+    }
+
+    const response = await fetch(asset.uri);
+    const blob = await response.blob();
+    return new File([blob], asset.name, {
+      type: asset.type ?? blob.type ?? 'application/octet-stream',
+    });
+  }
+
+  return {
+    uri: asset.uri,
+    name: asset.name,
+    type: asset.type ?? 'application/octet-stream',
+  };
+}
+
+function isWeb() {
+  return typeof window !== 'undefined' && typeof document !== 'undefined';
+}
+
+function isWebFile(value: unknown): value is File {
+  return typeof File !== 'undefined' && value instanceof File;
 }
